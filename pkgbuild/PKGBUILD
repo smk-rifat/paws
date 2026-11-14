@@ -1,0 +1,15 @@
+pkgname=drawboard
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Neovim for visual thinking - Linux-first personal drawing and diagramming"
+arch=('x86_64')
+url="https://github.com/omacom/drawboard"
+license=('MIT')
+depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-wayland')
+
+package() {
+    cd "$startdir"
+    install -Dm755 ../build/drawboard "$pkgdir/usr/bin/drawboard"
+    install -Dm644 drawboard.desktop "$pkgdir/usr/share/applications/drawboard.desktop"
+    install -Dm644 drawboard.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/drawboard.svg"
+}

@@ -1,0 +1,11 @@
+build/
+*.o
+*.a
+*.so
+Makefile
+Makefile.*
+*.qmake.stash
+.qmake.stash
+drawboard
+tests/drawboard_tests
+.DS_Store

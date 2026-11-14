@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>Main.qml</file>
+        <file>DotMenu.qml</file>
+        <file>CompactToolbar.qml</file>
+        <file>StatusLine.qml</file>
+        <file>ShortcutsOverlay.qml</file>
+        <file>ExportDialog.qml</file>
+        <file>SettingsDialog.qml</file>
+    </qresource>
+</RCC>

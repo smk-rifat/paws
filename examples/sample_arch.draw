@@ -1,0 +1,86 @@
+{
+  "appVersion": "0.1.0",
+  "createdAt": "2026-11-14T22:30:00",
+  "format": "drawboard",
+  "schemaVersion": 1,
+  "theme": "gruvbox-dark-medium",
+  "elements": [
+    {
+      "id": "box_client",
+      "type": "rectangle",
+      "bounds": [100, 100, 160, 60],
+      "strokeColor": "#d79921",
+      "strokeWidth": 2,
+      "strokeStyle": 1,
+      "fillColor": "#32302f",
+      "cornerRadius": 6,
+      "text": "Web / Mobile Client",
+      "fontSize": 13,
+      "textAlignment": 132
+    },
+    {
+      "id": "box_api",
+      "type": "rectangle",
+      "bounds": [360, 100, 180, 60],
+      "strokeColor": "#fe8019",
+      "strokeWidth": 2,
+      "strokeStyle": 1,
+      "fillColor": "#32302f",
+      "cornerRadius": 6,
+      "text": "API Gateway (Go)",
+      "fontSize": 13,
+      "textAlignment": 132
+    },
+    {
+      "id": "box_db",
+      "type": "ellipse",
+      "bounds": [640, 90, 140, 80],
+      "strokeColor": "#8ec07c",
+      "strokeWidth": 2,
+      "strokeStyle": 1,
+      "fillColor": "#32302f",
+      "text": "PostgreSQL DB",
+      "fontSize": 13,
+      "textAlignment": 132
+    },
+    {
+      "id": "conn_1",
+      "type": "connector",
+      "fromId": "box_client",
+      "fromCardinal": 2,
+      "toId": "box_api",
+      "toCardinal": 4,
+      "startX": 260,
+      "startY": 130,
+      "endX": 360,
+      "endY": 130,
+      "strokeColor": "#ebdbb2",
+      "strokeWidth": 2,
+      "arrowEnd": true
+    },
+    {
+      "id": "conn_2",
+      "type": "connector",
+      "fromId": "box_api",
+      "fromCardinal": 2,
+      "toId": "box_db",
+      "toCardinal": 4,
+      "startX": 540,
+      "startY": 130,
+      "endX": 640,
+      "endY": 130,
+      "strokeColor": "#ebdbb2",
+      "strokeWidth": 2,
+      "arrowEnd": true
+    },
+    {
+      "id": "note_1",
+      "type": "stickyNote",
+      "bounds": [360, 220, 200, 120],
+      "strokeColor": "#fabd2f",
+      "fillColor": "#3c3836",
+      "text": "Core services:\n• Auth & Rate Limiting\n• Event Dispatcher\n• gRPC backend pool",
+      "fontSize": 12
+    }
+  ]
+}
