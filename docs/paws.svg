@@ -1,0 +1,132 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Canvas: Deep Obsidian / Gruvbox Dark Stone -->
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2d2a28"/>
+      <stop offset="100%" stop-color="#181a1b"/>
+    </linearGradient>
+
+    <!-- Warm Amber / Gold Gradient -->
+    <linearGradient id="pawGrad" x1="15%" y1="0%" x2="85%" y2="100%">
+      <stop offset="0%" stop-color="#fabd2f"/>
+      <stop offset="50%" stop-color="#fe8019"/>
+      <stop offset="100%" stop-color="#d65d0e"/>
+    </linearGradient>
+
+    <!-- Border Gradient -->
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#665c54" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#3c3836" stop-opacity="0.4"/>
+    </linearGradient>
+
+    <!-- Specular Highlight for Volume -->
+    <radialGradient id="highlight" cx="32%" cy="28%" r="68%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.32"/>
+      <stop offset="45%" stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="70%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Drop Shadow for Paw -->
+    <filter id="dropShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Canvas Base -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#bgGrad)" stroke="url(#borderGrad)" stroke-width="4"/>
+  <rect x="22" y="22" width="468" height="468" rx="106" fill="none" stroke="#ebdbb2" stroke-opacity="0.04" stroke-width="2"/>
+
+  <!-- Minimalist Technical Canvas Grid Dots -->
+  <g fill="#504945" opacity="0.45">
+    <circle cx="80" cy="80" r="3.5"/>
+    <circle cx="168" cy="80" r="3.5"/>
+    <circle cx="256" cy="80" r="3.5"/>
+    <circle cx="344" cy="80" r="3.5"/>
+    <circle cx="432" cy="80" r="3.5"/>
+
+    <circle cx="80" cy="168" r="3.5"/>
+    <circle cx="432" cy="168" r="3.5"/>
+
+    <circle cx="80" cy="256" r="3.5"/>
+    <circle cx="432" cy="256" r="3.5"/>
+
+    <circle cx="80" cy="344" r="3.5"/>
+    <circle cx="432" cy="344" r="3.5"/>
+
+    <circle cx="80" cy="432" r="3.5"/>
+    <circle cx="168" cy="432" r="3.5"/>
+    <circle cx="256" cy="432" r="3.5"/>
+    <circle cx="344" cy="432" r="3.5"/>
+    <circle cx="432" cy="432" r="3.5"/>
+  </g>
+
+  <!-- The Hero Paw & Pen Emblem -->
+  <g filter="url(#dropShadow)">
+
+    <!-- Four Arched Toe Beans (Digital Pads) -->
+    <!-- Toe 1: Far Left (tilted -32 deg) -->
+    <g transform="translate(142, 168) rotate(-32)">
+      <ellipse cx="0" cy="0" rx="27" ry="38" fill="url(#pawGrad)"/>
+      <ellipse cx="0" cy="0" rx="27" ry="38" fill="url(#highlight)"/>
+    </g>
+
+    <!-- Toe 2: Center Left (tilted -11 deg) -->
+    <g transform="translate(214, 122) rotate(-11)">
+      <ellipse cx="0" cy="0" rx="30" ry="44" fill="url(#pawGrad)"/>
+      <ellipse cx="0" cy="0" rx="30" ry="44" fill="url(#highlight)"/>
+    </g>
+
+    <!-- Toe 3: Center Right (tilted +11 deg) -->
+    <g transform="translate(298, 122) rotate(11)">
+      <ellipse cx="0" cy="0" rx="30" ry="44" fill="url(#pawGrad)"/>
+      <ellipse cx="0" cy="0" rx="30" ry="44" fill="url(#highlight)"/>
+    </g>
+
+    <!-- Toe 4: Far Right (tilted +32 deg) -->
+    <g transform="translate(370, 168) rotate(32)">
+      <ellipse cx="0" cy="0" rx="27" ry="38" fill="url(#pawGrad)"/>
+      <ellipse cx="0" cy="0" rx="27" ry="38" fill="url(#highlight)"/>
+    </g>
+
+    <!-- Main Metacarpal Pad: Sculpted Organic Pebble / Heart Silhouette -->
+    <path d="M 256 198
+             C 310 198, 365 232, 365 290
+             C 365 345, 318 385, 276 391
+             C 264 393, 258 385, 256 385
+             C 254 385, 248 393, 236 391
+             C 194 385, 147 345, 147 290
+             C 147 232, 202 198, 256 198 Z"
+          fill="url(#pawGrad)"/>
+    <path d="M 256 198
+             C 310 198, 365 232, 365 290
+             C 365 345, 318 385, 276 391
+             C 264 393, 258 385, 256 385
+             C 254 385, 248 393, 236 391
+             C 194 385, 147 345, 147 290
+             C 147 232, 202 198, 256 198 Z"
+          fill="url(#highlight)"/>
+
+    <!-- Inset Precision Calligraphy Nib Silhouette -->
+    <path d="M 256 230
+             C 278 230, 296 248, 296 270
+             L 296 295
+             L 256 375
+             L 216 295
+             L 216 270
+             C 216 248, 234 230, 256 230 Z"
+          fill="#181a1b"/>
+
+    <!-- Golden Nib Breather Hole & Fine Slit -->
+    <circle cx="256" cy="274" r="9" fill="#fabd2f"/>
+    <rect x="254.2" y="274" width="3.6" height="96" rx="1.8" fill="#fabd2f"/>
+
+    <!-- Golden Ink Droplet at the Nib Tip -->
+    <path d="M 256 406
+             C 251 415, 246 422, 246 428
+             C 246 434, 250.5 438, 256 438
+             C 261.5 438, 266 434, 266 428
+             C 266 422, 261 415, 256 406 Z"
+          fill="#fabd2f"/>
+    <ellipse cx="254.5" cy="426" rx="2.5" ry="4" fill="#ffffff" opacity="0.35"/>
+  </g>
+</svg>

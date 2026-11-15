@@ -1,7 +1,13 @@
-# Paws 🐾
+<p align="center">
+  <img src="docs/icon.png" width="128" height="128" alt="Paws Icon" />
+</p>
 
-> **Complex capability underneath, extremely simple interface on top.**  
-> *A serious, local-first visual thinking workspace built for Linux developers and minimalist thinkers.*
+<h1 align="center">Paws 🐾</h1>
+
+<p align="center">
+  <strong>Complex capability underneath, extremely simple interface on top.</strong><br>
+  <em>A serious, local-first visual thinking workspace built for Linux developers and minimalist thinkers.</em>
+</p>
 
 ![Paws Screenshot](docs/screenshot.png)
 
