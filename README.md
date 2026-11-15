@@ -160,7 +160,7 @@ paws --export spec.pdf path/to/diagram.paws
 
 Install the required Qt 6 development libraries and tools:
 ```bash
-sudo pacman -S qmake6 qt6-base qt6-declarative qt6-svg qt6-wayland gcc make
+sudo pacman -S qt6-base qt6-declarative qt6-svg qt6-wayland gcc make
 ```
 
 ### Build & Test

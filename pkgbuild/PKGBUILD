@@ -6,10 +6,10 @@ arch=('x86_64')
 url="https://github.com/smk-rifat/paws"
 license=('MIT')
 depends=('qt6-base' 'qt6-declarative' 'qt6-svg' 'qt6-wayland')
-makedepends=('qmake6' 'gcc' 'make')
+makedepends=('gcc' 'make')
 
 package() {
-    install -Dm755 ../build/paws "$pkgdir/usr/bin/paws"
-    install -Dm644 paws.desktop "$pkgdir/usr/share/applications/paws.desktop"
-    install -Dm644 paws.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/paws.svg"
+    install -Dm755 "$startdir/../build/paws" "$pkgdir/usr/bin/paws"
+    install -Dm644 "$startdir/paws.desktop" "$pkgdir/usr/share/applications/paws.desktop"
+    install -Dm644 "$startdir/paws.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/paws.svg"
 }
