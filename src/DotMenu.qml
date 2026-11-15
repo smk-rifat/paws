@@ -62,13 +62,17 @@ Item {
         contentItem: ColumnLayout {
             spacing: 2
 
-            // Menu Section: Document
+            // Menu Section: Document & View
             Repeater {
                 model: [
                     { label: "New Document", shortcut: "Ctrl+N", action: "new" },
                     { label: "Open...", shortcut: "Ctrl+O", action: "open" },
                     { label: "Save", shortcut: "Ctrl+S", action: "save" },
-                    { label: "Export (PNG / SVG / PDF)...", shortcut: "Ctrl+E", action: "export" }
+                    { label: "Export (PNG / SVG / PDF)...", shortcut: "Ctrl+E", action: "export" },
+                    { label: "Copy Snapshot", shortcut: "Ctrl+Shift+C", action: "copy_snapshot" },
+                    { label: "Zen Mode", shortcut: "Z", action: "zen_mode" },
+                    { label: "Reset Zoom (100%)", shortcut: "Ctrl+0", action: "zoom_reset" },
+                    { label: "Fit to Content", shortcut: "Shift+1", action: "zoom_fit" }
                 ]
 
                 delegate: Rectangle {
@@ -111,6 +115,10 @@ Item {
                                 else backend.saveDocument()
                             }
                             else if (modelData.action === "export") root.openExportDialog()
+                            else if (modelData.action === "copy_snapshot") backend.copySelectionToClipboard()
+                            else if (modelData.action === "zen_mode") appWindow.toggleZenMode()
+                            else if (modelData.action === "zoom_reset") backend.resetView()
+                            else if (modelData.action === "zoom_fit") backend.zoomToFit()
                         }
                     }
                 }
@@ -208,3 +216,4 @@ Item {
         }
     }
 }
+

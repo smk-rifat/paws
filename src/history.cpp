@@ -63,3 +63,4 @@ QString History::redoDescription() const {
 }
 
 } // namespace DrawBoard
+

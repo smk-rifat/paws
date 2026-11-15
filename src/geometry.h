@@ -17,7 +17,7 @@ public:
     static QVector<StrokePoint> smoothPoints(const QVector<StrokePoint> &rawPoints);
 
     // Hit testing
-    static bool hitTest(const Element &element, const QPointF &point, qreal tolerance = 6.0);
+    static bool hitTest(const Element &element, const QPointF &point, qreal tolerance = 6.0, bool testInterior = true);
     static bool rectIntersectsElement(const QRectF &rect, const Element &element);
 
     // Cardinal connection points
@@ -38,6 +38,9 @@ public:
 
     // Bounding box calculations
     static QRectF calculateStrokeBounds(const QVector<StrokePoint> &points, qreal strokeWidth);
+    static QRectF calculateTextBounds(const QString &text, const QPointF &topLeft,
+                                      qreal fontSize = 16.0, const QString &fontFamily = "sans-serif");
 };
 
 } // namespace DrawBoard
+

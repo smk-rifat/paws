@@ -6,6 +6,11 @@ Makefile
 Makefile.*
 *.qmake.stash
 .qmake.stash
+paws
 drawboard
+tests/paws_tests
 tests/drawboard_tests
+pkgbuild/pkg/
+pkgbuild/src/
+*.pkg.tar.*
 .DS_Store

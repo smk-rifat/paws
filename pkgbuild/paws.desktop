@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Paws
+Comment=A serious personal visual thinking workspace for Linux & Omarchy
+Exec=paws %F
+Icon=paws
+Terminal=false
+Categories=Graphics;Office;Utility;
+MimeType=application/x-paws;application/x-drawboard;image/svg+xml;
+StartupWMClass=paws

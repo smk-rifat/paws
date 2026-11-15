@@ -8,9 +8,10 @@ Popup {
     modal: true
     focus: true
     anchors.centerIn: parent
-    width: Math.min(680, parent.width - 40)
-    height: Math.min(540, parent.height - 40)
+    width: Math.min(740, Math.max(520, parent.width - 40))
+    height: Math.min(540, Math.max(400, parent.height - 40))
     padding: 0
+    clip: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
 
     property string currentTab: "theme"
@@ -20,6 +21,7 @@ Popup {
         border.color: theme.border
         border.width: 1
         radius: Math.min(8, theme.radius)
+        clip: true
     }
 
     contentItem: RowLayout {
@@ -28,7 +30,7 @@ Popup {
         // Sidebar Navigation
         Rectangle {
             Layout.fillHeight: true
-            implicitWidth: 140
+            Layout.preferredWidth: 140
             color: theme.background
             border.color: theme.borderMuted
             border.width: 1
@@ -89,463 +91,581 @@ Popup {
             }
         }
 
-        // Tab Content Area
-        Rectangle {
+        // Tab Content Area with Dedicated Footer
+        ColumnLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            color: "transparent"
+            spacing: 0
+            clip: true
 
-            ColumnLayout {
-                anchors.fill: parent
-                anchors.margins: 18
-                spacing: 12
+            // Scrollable Content Pane
+            ScrollView {
+                id: tabScroll
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                clip: true
+                contentWidth: availableWidth
+                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+                ScrollBar.vertical.policy: ScrollBar.AsNeeded
 
-                // TAB 1: THEMES
-                ColumnLayout {
-                    visible: root.currentTab === "theme"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 10
+                Item {
+                    width: tabScroll.availableWidth
+                    implicitHeight: contentCol.implicitHeight + 36
 
-                    Text {
-                        text: "Theme Family & Variant"
-                        font.pixelSize: 14
-                        font.bold: true
-                        color: theme.text
-                    }
+                    ColumnLayout {
+                        id: contentCol
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 18
+                        spacing: 12
 
-                    // Available Families
-                    RowLayout {
-                        spacing: 6
-                        Repeater {
-                            model: theme.availableFamilies
+                        // TAB 1: THEMES
+                        ColumnLayout {
+                            visible: root.currentTab === "theme"
+                            Layout.fillWidth: true
+                            spacing: 10
 
-                            delegate: Rectangle {
-                                required property string modelData
-                                implicitWidth: famText.implicitWidth + 14
-                                implicitHeight: 26
-                                radius: Math.min(4, theme.radius)
-                                color: theme.family === modelData ? theme.surfaceElevated : theme.background
-                                border.color: theme.family === modelData ? theme.accent : theme.borderMuted
-                                border.width: 1
+                            Text {
+                                text: "Theme Family & Variant"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: theme.text
+                            }
 
-                                Text {
-                                    id: famText
-                                    anchors.centerIn: parent
-                                    text: modelData
-                                    font.pixelSize: 11
-                                    font.bold: theme.family === modelData
-                                    color: theme.family === modelData ? theme.accent : theme.textMuted
+                            // Available Families (Wrap naturally with Flow)
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Repeater {
+                                    model: theme.availableFamilies
+
+                                    delegate: Rectangle {
+                                        required property string modelData
+                                        implicitWidth: famText.implicitWidth + 14
+                                        implicitHeight: 26
+                                        radius: Math.min(4, theme.radius)
+                                        color: theme.family === modelData ? theme.surfaceElevated : theme.background
+                                        border.color: theme.family === modelData ? theme.accent : theme.borderMuted
+                                        border.width: 1
+
+                                        Text {
+                                            id: famText
+                                            anchors.centerIn: parent
+                                            text: modelData
+                                            font.pixelSize: 11
+                                            font.bold: theme.family === modelData
+                                            color: theme.family === modelData ? theme.accent : theme.textMuted
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                var variants = theme.getVariantsForFamily(modelData)
+                                                if (variants.length > 0) {
+                                                    var newId = theme.getThemeId(modelData, variants[0])
+                                                    theme.setThemeId(newId)
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
+                            }
 
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        var variants = theme.getVariantsForFamily(modelData)
-                                        if (variants.length > 0) {
-                                            var newId = theme.getThemeId(modelData, variants[0])
-                                            theme.setThemeId(newId)
+                            // Available Variants for selected family
+                            Text {
+                                text: "Variants"
+                                font.pixelSize: 12
+                                color: theme.textMuted
+                                Layout.topMargin: 4
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Repeater {
+                                    model: theme.getVariantsForFamily(theme.family)
+
+                                    delegate: Rectangle {
+                                        required property string modelData
+                                        implicitWidth: varText.implicitWidth + 14
+                                        implicitHeight: 26
+                                        radius: Math.min(4, theme.radius)
+                                        color: theme.variant === modelData ? theme.accent : theme.background
+                                        border.color: theme.borderMuted
+                                        border.width: 1
+
+                                        Text {
+                                            id: varText
+                                            anchors.centerIn: parent
+                                            text: modelData
+                                            font.pixelSize: 11
+                                            font.bold: theme.variant === modelData
+                                            color: theme.variant === modelData ? theme.accentForeground : theme.text
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                var newId = theme.getThemeId(theme.family, modelData)
+                                                theme.setThemeId(newId)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Active Palette Tokens Preview
+                            Text {
+                                text: "Design Token Palette"
+                                font.pixelSize: 12
+                                color: theme.textMuted
+                                Layout.topMargin: 8
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 74
+                                radius: Math.min(4, theme.radius)
+                                color: theme.background
+                                border.color: theme.borderMuted
+                                border.width: 1
+                                clip: true
+
+                                RowLayout {
+                                    anchors.centerIn: parent
+                                    spacing: 12
+
+                                    Repeater {
+                                        model: [
+                                            { name: "Canvas", color: theme.canvas },
+                                            { name: "Surface", color: theme.surface },
+                                            { name: "Accent", color: theme.accent },
+                                            { name: "Stroke 1", color: theme.strokePrimary },
+                                            { name: "Stroke 2", color: theme.strokeSecondary },
+                                            { name: "Stroke 3", color: theme.strokeTertiary },
+                                            { name: "Note", color: theme.note }
+                                        ]
+
+                                        delegate: ColumnLayout {
+                                            required property var modelData
+                                            spacing: 4
+
+                                            Rectangle {
+                                                implicitWidth: 30
+                                                implicitHeight: 30
+                                                radius: 15
+                                                color: modelData.color
+                                                border.color: theme.border
+                                                border.width: 1
+                                            }
+
+                                            Text {
+                                                text: modelData.name
+                                                font.pixelSize: 9
+                                                font.family: "monospace"
+                                                color: theme.textMuted
+                                                Layout.alignment: Qt.AlignHCenter
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    // Available Variants for selected family
-                    Text {
-                        text: "Variants"
-                        font.pixelSize: 12
-                        color: theme.textMuted
-                        Layout.topMargin: 6
-                    }
-
-                    RowLayout {
-                        spacing: 6
-                        Repeater {
-                            model: theme.getVariantsForFamily(theme.family)
-
-                            delegate: Rectangle {
-                                required property string modelData
-                                implicitWidth: varText.implicitWidth + 14
-                                implicitHeight: 26
-                                radius: Math.min(4, theme.radius)
-                                color: theme.variant === modelData ? theme.accent : theme.background
-                                border.color: theme.borderMuted
-                                border.width: 1
-
-                                Text {
-                                    id: varText
-                                    anchors.centerIn: parent
-                                    text: modelData
-                                    font.pixelSize: 11
-                                    font.bold: theme.variant === modelData
-                                    color: theme.variant === modelData ? theme.accentForeground : theme.text
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: {
-                                        var newId = theme.getThemeId(theme.family, modelData)
-                                        theme.setThemeId(newId)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Active Palette Tokens Preview
-                    Text {
-                        text: "Design Token Palette"
-                        font.pixelSize: 12
-                        color: theme.textMuted
-                        Layout.topMargin: 10
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 80
-                        radius: Math.min(4, theme.radius)
-                        color: theme.background
-                        border.color: theme.borderMuted
-                        border.width: 1
-
-                        RowLayout {
-                            anchors.centerIn: parent
+                        // TAB 2: CANVAS & GRID
+                        ColumnLayout {
+                            visible: root.currentTab === "canvas"
+                            Layout.fillWidth: true
                             spacing: 12
 
-                            Repeater {
-                                model: [
-                                    { name: "Canvas", color: theme.canvas },
-                                    { name: "Surface", color: theme.surface },
-                                    { name: "Accent", color: theme.accent },
-                                    { name: "Stroke 1", color: theme.strokePrimary },
-                                    { name: "Stroke 2", color: theme.strokeSecondary },
-                                    { name: "Stroke 3", color: theme.strokeTertiary },
-                                    { name: "Note", color: theme.note }
-                                ]
+                            Text {
+                                text: "Canvas & Grid Configuration"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: theme.text
+                            }
 
-                                delegate: ColumnLayout {
-                                    required property var modelData
-                                    spacing: 4
+                            Text {
+                                text: "Grid Style"
+                                font.pixelSize: 11
+                                color: theme.textMuted
+                            }
 
-                                    Rectangle {
-                                        implicitWidth: 32
-                                        implicitHeight: 32
-                                        radius: 16
-                                        color: modelData.color
-                                        border.color: theme.border
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Repeater {
+                                    model: [
+                                        { id: 0, label: "Dots" },
+                                        { id: 1, label: "Lines" },
+                                        { id: 2, label: "Crosses" },
+                                        { id: 3, label: "None" }
+                                    ]
+
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        implicitWidth: 70
+                                        implicitHeight: 28
+                                        radius: Math.min(4, theme.radius)
+                                        color: backend.gridStyle === modelData.id ? theme.surfaceElevated : theme.background
+                                        border.color: backend.gridStyle === modelData.id ? theme.accent : theme.borderMuted
                                         border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            color: backend.gridStyle === modelData.id ? theme.accent : theme.text
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: backend.gridStyle = modelData.id
+                                        }
                                     }
+                                }
+                            }
+
+                            // Snap to Grid
+                            RowLayout {
+                                spacing: 8
+                                Layout.topMargin: 4
+
+                                Rectangle {
+                                    implicitWidth: 18
+                                    implicitHeight: 18
+                                    radius: Math.min(3, theme.radius)
+                                    color: backend.snapToGrid ? theme.accent : theme.background
+                                    border.color: theme.borderMuted
+                                    border.width: 1
 
                                     Text {
-                                        text: modelData.name
-                                        font.pixelSize: 9
-                                        font.family: "monospace"
-                                        color: theme.textMuted
-                                        Layout.alignment: Qt.AlignHCenter
+                                        anchors.centerIn: parent
+                                        text: "✓"
+                                        visible: backend.snapToGrid
+                                        font.pixelSize: 11
+                                        color: theme.accentForeground
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: backend.snapToGrid = !backend.snapToGrid
+                                    }
+                                }
+
+                                Text {
+                                    text: "Snap to Grid"
+                                    font.pixelSize: 12
+                                    color: theme.text
+                                }
+                            }
+
+                            // Grid Size
+                            Text {
+                                text: "Grid Size"
+                                font.pixelSize: 11
+                                color: theme.textMuted
+                                Layout.topMargin: 4
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 8
+
+                                Repeater {
+                                    model: [
+                                        { size: 10, label: "10px" },
+                                        { size: 20, label: "20px" },
+                                        { size: 30, label: "30px" },
+                                        { size: 40, label: "40px" }
+                                    ]
+
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        implicitWidth: 54
+                                        implicitHeight: 26
+                                        radius: Math.min(4, theme.radius)
+                                        color: Math.abs(backend.gridSize - modelData.size) < 0.1 ? theme.surfaceElevated : theme.background
+                                        border.color: Math.abs(backend.gridSize - modelData.size) < 0.1 ? theme.accent : theme.borderMuted
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            font.family: "monospace"
+                                            color: Math.abs(backend.gridSize - modelData.size) < 0.1 ? theme.accent : theme.text
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: backend.gridSize = modelData.size
+                                        }
                                     }
                                 }
                             }
                         }
-                    }
 
-                    Item { Layout.fillHeight: true }
-                }
-
-                // TAB 2: CANVAS & GRID
-                ColumnLayout {
-                    visible: root.currentTab === "canvas"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 12
-
-                    Text {
-                        text: "Canvas & Grid Configuration"
-                        font.pixelSize: 14
-                        font.bold: true
-                        color: theme.text
-                    }
-
-                    // Grid Style
-                    Text {
-                        text: "Grid Style"
-                        font.pixelSize: 11
-                        color: theme.textMuted
-                    }
-
-                    RowLayout {
-                        spacing: 8
-                        Repeater {
-                            model: [
-                                { id: 0, label: "Dots" },
-                                { id: 1, label: "Lines" },
-                                { id: 2, label: "Crosses" },
-                                { id: 3, label: "None" }
-                            ]
-
-                            delegate: Rectangle {
-                                required property var modelData
-                                implicitWidth: 70
-                                implicitHeight: 28
-                                radius: Math.min(4, theme.radius)
-                                color: backend.gridStyle === modelData.id ? theme.surfaceElevated : theme.background
-                                border.color: backend.gridStyle === modelData.id ? theme.accent : theme.borderMuted
-                                border.width: 1
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData.label
-                                    font.pixelSize: 11
-                                    color: backend.gridStyle === modelData.id ? theme.accent : theme.text
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: backend.gridStyle = modelData.id
-                                }
-                            }
-                        }
-                    }
-
-                    // Snap to Grid
-                    RowLayout {
-                        spacing: 8
-                        Layout.topMargin: 8
-
-                        Rectangle {
-                            implicitWidth: 18
-                            implicitHeight: 18
-                            radius: Math.min(3, theme.radius)
-                            color: backend.snapToGrid ? theme.accent : theme.background
-                            border.color: theme.borderMuted
-                            border.width: 1
-
-                            Text {
-                                anchors.centerIn: parent
-                                text: "✓"
-                                visible: backend.snapToGrid
-                                font.pixelSize: 11
-                                color: theme.accentForeground
-                            }
-
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: backend.snapToGrid = !backend.snapToGrid
-                            }
-                        }
-
-                        Text {
-                            text: "Snap to Grid"
-                            font.pixelSize: 12
-                            color: theme.text
-                        }
-                    }
-
-                    Item { Layout.fillHeight: true }
-                }
-
-                // TAB 3: DRAWING
-                ColumnLayout {
-                    visible: root.currentTab === "drawing"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 12
-
-                    Text {
-                        text: "Drawing Preferences"
-                        font.pixelSize: 14
-                        font.bold: true
-                        color: theme.text
-                    }
-
-                    Text {
-                        text: "Default Pen Size"
-                        font.pixelSize: 11
-                        color: theme.textMuted
-                    }
-
-                    RowLayout {
-                        spacing: 6
-                        Repeater {
-                            model: [1, 2, 4, 8, 12, 16]
-
-                            delegate: Rectangle {
-                                required property int modelData
-                                implicitWidth: 32
-                                implicitHeight: 28
-                                radius: Math.min(4, theme.radius)
-                                color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.surfaceElevated : theme.background
-                                border.color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.accent : theme.borderMuted
-                                border.width: 1
-
-                                Text {
-                                    anchors.centerIn: parent
-                                    text: modelData + "px"
-                                    font.pixelSize: 10
-                                    font.family: "monospace"
-                                    color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.accent : theme.text
-                                }
-
-                                MouseArea {
-                                    anchors.fill: parent
-                                    cursorShape: Qt.PointingHandCursor
-                                    onClicked: backend.penSize = modelData
-                                }
-                            }
-                        }
-                    }
-
-                    Item { Layout.fillHeight: true }
-                }
-
-                // TAB 4: SHORTCUTS
-                ColumnLayout {
-                    visible: root.currentTab === "shortcuts"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 8
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        Text {
-                            text: "Keyboard Shortcuts"
-                            font.pixelSize: 14
-                            font.bold: true
-                            color: theme.text
+                        // TAB 3: DRAWING
+                        ColumnLayout {
+                            visible: root.currentTab === "drawing"
                             Layout.fillWidth: true
-                        }
-
-                        Rectangle {
-                            implicitWidth: 70
-                            implicitHeight: 24
-                            radius: Math.min(3, theme.radius)
-                            color: theme.background
-                            border.color: theme.borderMuted
-                            border.width: 1
+                            spacing: 12
 
                             Text {
-                                anchors.centerIn: parent
-                                text: "Reset All"
-                                font.pixelSize: 10
-                                color: theme.danger
+                                text: "Drawing Preferences"
+                                font.pixelSize: 14
+                                font.bold: true
+                                color: theme.text
                             }
 
-                            MouseArea {
-                                anchors.fill: parent
-                                cursorShape: Qt.PointingHandCursor
-                                onClicked: shortcuts.resetAll()
+                            Text {
+                                text: "Default Pen Size"
+                                font.pixelSize: 11
+                                color: theme.textMuted
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Repeater {
+                                    model: [2, 3, 4, 5]
+
+                                    delegate: Rectangle {
+                                        required property int modelData
+                                        implicitWidth: 36
+                                        implicitHeight: 28
+                                        radius: Math.min(4, theme.radius)
+                                        color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.surfaceElevated : theme.background
+                                        border.color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.accent : theme.borderMuted
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData + "px"
+                                            font.pixelSize: 10
+                                            font.family: "monospace"
+                                            color: Math.abs(backend.penSize - modelData) < 0.1 ? theme.accent : theme.text
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: backend.penSize = modelData
+                                        }
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: "Default Tool"
+                                font.pixelSize: 11
+                                color: theme.textMuted
+                                Layout.topMargin: 4
+                            }
+
+                            Flow {
+                                Layout.fillWidth: true
+                                spacing: 6
+
+                                Repeater {
+                                    model: [
+                                        { id: "pen", label: "Pen" },
+                                        { id: "select", label: "Select" },
+                                        { id: "laser", label: "Laser" },
+                                        { id: "rectangle", label: "Rectangle" },
+                                        { id: "ellipse", label: "Circle" },
+                                        { id: "arrow", label: "Arrow" },
+                                        { id: "text", label: "Text" }
+                                    ]
+
+                                    delegate: Rectangle {
+                                        required property var modelData
+                                        implicitWidth: 64
+                                        implicitHeight: 26
+                                        radius: Math.min(4, theme.radius)
+                                        color: backend.tool === modelData.id ? theme.surfaceElevated : theme.background
+                                        border.color: backend.tool === modelData.id ? theme.accent : theme.borderMuted
+                                        border.width: 1
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelData.label
+                                            font.pixelSize: 11
+                                            color: backend.tool === modelData.id ? theme.accent : theme.text
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: backend.tool = modelData.id
+                                        }
+                                    }
+                                }
                             }
                         }
-                    }
 
-                    ListView {
-                        id: scList
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        clip: true
-                        spacing: 2
-                        model: shortcuts.getShortcuts()
-
-                        delegate: Rectangle {
-                            required property var modelData
-                            width: scList.width
-                            height: 26
-                            color: "transparent"
+                        // TAB 4: SHORTCUTS
+                        ColumnLayout {
+                            visible: root.currentTab === "shortcuts"
+                            Layout.fillWidth: true
+                            spacing: 8
 
                             RowLayout {
-                                anchors.fill: parent
+                                Layout.fillWidth: true
                                 Text {
-                                    text: modelData.name
-                                    font.pixelSize: 11
+                                    text: "Keyboard Shortcuts"
+                                    font.pixelSize: 14
+                                    font.bold: true
                                     color: theme.text
                                     Layout.fillWidth: true
                                 }
-                                Text {
-                                    text: modelData.currentKey
-                                    font.pixelSize: 10
-                                    font.family: "monospace"
-                                    font.bold: true
-                                    color: modelData.isModified ? theme.warning : theme.accent
+
+                                Rectangle {
+                                    implicitWidth: 70
+                                    implicitHeight: 24
+                                    radius: Math.min(3, theme.radius)
+                                    color: theme.background
+                                    border.color: theme.borderMuted
+                                    border.width: 1
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "Reset All"
+                                        font.pixelSize: 10
+                                        color: theme.danger
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: shortcuts.resetAll()
+                                    }
                                 }
+                            }
+
+                            Repeater {
+                                model: shortcuts.getShortcuts()
+
+                                delegate: Rectangle {
+                                    required property var modelData
+                                    Layout.fillWidth: true
+                                    height: 26
+                                    color: "transparent"
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        Text {
+                                            text: modelData.name
+                                            font.pixelSize: 11
+                                            color: theme.text
+                                            Layout.fillWidth: true
+                                        }
+                                        Text {
+                                            text: modelData.currentKey
+                                            font.pixelSize: 10
+                                            font.family: "monospace"
+                                            font.bold: true
+                                            color: modelData.isModified ? theme.warning : theme.accent
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // TAB 5: ABOUT
+                        ColumnLayout {
+                            visible: root.currentTab === "about"
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            Text {
+                                text: "Paws"
+                                font.pixelSize: 16
+                                font.bold: true
+                                color: theme.accent
+                            }
+
+                            Text {
+                                text: "Version 0.1.0 — Neovim for Visual Thinking"
+                                font.pixelSize: 12
+                                font.family: "monospace"
+                                color: theme.textMuted
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                height: 1
+                                color: theme.borderMuted
+                                Layout.topMargin: 4
+                                Layout.bottomMargin: 4
+                            }
+
+                            Text {
+                                text: "A serious personal visual workspace designed for Arch Linux & Omarchy.\n\n" +
+                                      "• Infinite vector canvas with high-performance C++ QPainter rendering\n" +
+                                      "• Butter-smooth Midpoint Quadratic Bézier splines and binomial Gaussian smoothing\n" +
+                                      "• Clean semantic design token theme system\n" +
+                                      "• Dynamic smart connectors for technical diagrams and architectures\n" +
+                                      "• High-resolution PNG, vector SVG, and vector PDF exports\n" +
+                                      "• Local-first versioned document storage with crash recovery"
+                                font.pixelSize: 11
+                                color: theme.text
+                                lineHeight: 1.4
+                                wrapMode: Text.WordWrap
+                                Layout.fillWidth: true
                             }
                         }
                     }
                 }
+            }
 
-                // TAB 5: ABOUT
-                ColumnLayout {
-                    visible: root.currentTab === "about"
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 8
+            // Fixed Dialog Footer (Always visible, perfectly anchored)
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: theme.borderMuted
+            }
 
-                    Text {
-                        text: "Drawboard"
-                        font.pixelSize: 16
-                        font.bold: true
-                        color: theme.accent
-                    }
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: 44
 
-                    Text {
-                        text: "Version 0.1.0 — Neovim for Visual Thinking"
-                        font.pixelSize: 12
-                        font.family: "monospace"
-                        color: theme.textMuted
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        height: 1
-                        color: theme.borderMuted
-                        Layout.topMargin: 4
-                        Layout.bottomMargin: 4
-                    }
+                Rectangle {
+                    anchors.right: parent.right
+                    anchors.rightMargin: 18
+                    anchors.verticalCenter: parent.verticalCenter
+                    implicitWidth: 70
+                    implicitHeight: 28
+                    radius: Math.min(4, theme.radius)
+                    color: doneMouse.containsMouse ? theme.accent : theme.surfaceElevated
+                    border.color: doneMouse.containsMouse ? theme.accent : theme.borderMuted
+                    border.width: 1
 
                     Text {
-                        text: "A serious personal visual workspace designed for Arch Linux & Omarchy.\n\n" +
-                              "• Infinite vector canvas with high-performance C++ QPainter rendering\n" +
-                              "• Natural freehand drawing with Catmull-Rom smoothing\n" +
-                              "• Clean semantic design token theme system\n" +
-                              "• Dynamic smart connectors for technical diagrams and architectures\n" +
-                              "• High-resolution PNG, vector SVG, and vector PDF exports\n" +
-                              "• Local-first versioned document storage with crash recovery"
+                        anchors.centerIn: parent
+                        text: "Done"
                         font.pixelSize: 11
-                        color: theme.text
-                        lineHeight: 1.4
+                        font.bold: true
+                        color: doneMouse.containsMouse ? theme.accentForeground : theme.text
                     }
 
-                    Item { Layout.fillHeight: true }
-                }
-
-                // Close Button
-                RowLayout {
-                    Layout.fillWidth: true
-                    Item { Layout.fillWidth: true }
-                    Rectangle {
-                        implicitWidth: 60
-                        implicitHeight: 26
-                        radius: Math.min(3, theme.radius)
-                        color: theme.surfaceElevated
-                        border.color: theme.borderMuted
-                        border.width: 1
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Done"
-                            font.pixelSize: 11
-                            color: theme.text
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: root.close()
-                        }
+                    MouseArea {
+                        id: doneMouse
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.close()
                     }
                 }
             }

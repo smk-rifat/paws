@@ -13,6 +13,10 @@ public:
     static void paintElement(QPainter &painter, const Element &el, const ThemePalette &theme);
     static void paintElements(QPainter &painter, const QVector<Element> &elements, const ThemePalette &theme);
 
+    // Direct image rendering (used for clipboard snapshot and high-res preview)
+    static QImage renderImage(const QVector<Element> &elements, const ThemePalette &theme,
+                              qreal scale = 2.0, bool transparentBg = true, qreal padding = 20.0);
+
     // Export functions
     static bool exportPng(const QString &filePath, const Document &doc, const ThemePalette &theme,
                           qreal scale = 2.0, bool transparentBg = false);
@@ -25,3 +29,4 @@ public:
 };
 
 } // namespace DrawBoard
+

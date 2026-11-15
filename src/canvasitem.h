@@ -8,8 +8,11 @@
 #include <QPointF>
 #include <QQuickPaintedItem>
 #include <QRectF>
+#include <QSet>
 
 namespace DrawBoard {
+
+class Backend;
 
 class CanvasItem : public QQuickPaintedItem {
     Q_OBJECT
@@ -25,6 +28,7 @@ class CanvasItem : public QQuickPaintedItem {
     Q_PROPERTY(QColor strokeColor READ strokeColor WRITE setStrokeColor NOTIFY strokeColorChanged)
     Q_PROPERTY(QColor currentFillColor READ currentFillColor WRITE setCurrentFillColor NOTIFY currentFillColorChanged)
     Q_PROPERTY(bool isPanning READ isPanning NOTIFY isPanningChanged)
+    Q_PROPERTY(bool isDrawing READ isDrawing NOTIFY isDrawingChanged)
 
 public:
     explicit CanvasItem(QQuickItem *parent = nullptr);
@@ -32,6 +36,7 @@ public:
     void setDocument(Document *doc);
     void setHistory(History *history);
     void setTheme(Theme *theme);
+    void setBackend(Backend *backend) { m_backend = backend; }
 
     qreal panX() const { return m_panX; }
     void setPanX(qreal x);
@@ -64,6 +69,11 @@ public:
     void setCurrentFillColor(const QColor &color);
 
     bool isPanning() const { return m_isPanning; }
+    bool isDrawing() const { return m_isDrawing; }
+    bool isStraightened() const { return m_isStraightened; }
+    int laserStrokeCount() const { return m_laserStrokes.size(); }
+
+    Q_INVOKABLE void checkHoldToStraighten();
 
     // Coordinate conversions
     Q_INVOKABLE QPointF screenToWorld(const QPointF &screenPoint) const;
@@ -89,7 +99,9 @@ signals:
     void strokeColorChanged();
     void currentFillColorChanged();
     void isPanningChanged();
-    void editTextRequested(const QString &id, const QString &text, const QRectF &screenRect);
+    void isDrawingChanged();
+    void createTextRequested(qreal worldX, qreal worldY, qreal screenX, qreal screenY, qreal fontSize, const QString &color);
+    void editTextRequested(const QString &id, const QString &text, qreal screenX, qreal screenY, qreal fontSize, const QString &color);
     void pointerMoved(qreal worldX, qreal worldY);
 
 protected:
@@ -101,6 +113,9 @@ protected:
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
+    void dragEnterEvent(QDragEnterEvent *event) override;
+    void dragMoveEvent(QDragMoveEvent *event) override;
+    void dropEvent(QDropEvent *event) override;
 
 private:
     QPointF snap(const QPointF &pt) const;
@@ -111,6 +126,7 @@ private:
     Document *m_doc = nullptr;
     History *m_history = nullptr;
     Theme *m_theme = nullptr;
+    Backend *m_backend = nullptr;
 
     qreal m_panX = 0.0;
     qreal m_panY = 0.0;
@@ -120,13 +136,16 @@ private:
     bool m_snapToGrid = false;
 
     Tool m_activeTool = Tool::Select;
-    qreal m_strokeWidth = 2.0;
+    qreal m_strokeWidth = 3.0;
     QColor m_strokeColor = QColor("#ebdbb2");
     QColor m_currentFillColor = Qt::transparent;
 
     // Interaction states
     bool m_isPanning = false;
+    bool m_isDrawing = false;
     bool m_spaceDown = false;
+    bool m_isStraightened = false;
+    QTimer m_holdToStraightenTimer;
     QPointF m_lastMousePos;
     QPointF m_dragStartWorld;
 
@@ -135,12 +154,27 @@ private:
         Pan,
         DrawStroke,
         DrawShape,
+        Erase,
         MoveElements,
         ResizeElements,
         RubberbandSelect,
-        DrawConnector
+        DrawConnector,
+        Laser
     };
     DragMode m_dragMode = DragMode::None;
+
+    // Laser pointer in-progress data
+    struct LaserStroke {
+        QVector<QPointF> points;
+        qint64 finishedTime = 0; // 0 while actively drawing
+    };
+    QVector<LaserStroke> m_laserStrokes;
+    QTimer m_laserTimer;
+    QPointF m_lastHoverWorld;
+
+    // Eraser in-progress data
+    QVector<QPointF> m_eraserTrail;
+    QSet<QString> m_markedForDeletion;
 
     // In-progress data
     QVector<StrokePoint> m_currentStrokePoints;
@@ -149,6 +183,9 @@ private:
     QPointF m_lineEnd;
     QRectF m_rubberbandRect;
     HandleType m_activeHandle = HandleType::None;
+    QVector<Element> m_dragInitialElements;
+    QRectF m_dragInitialSelectionBounds;
+    QSet<QString> m_dragStartSelection;
 
     // Connector in-progress
     QString m_connectorSourceId;
@@ -159,6 +196,7 @@ private:
 
     // Hovered target
     QString m_hoveredElementId;
+    QString m_clickedElementId;
 };
 
 } // namespace DrawBoard

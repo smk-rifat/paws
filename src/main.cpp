@@ -30,11 +30,11 @@ int main(int argc, char *argv[]) {
     }
 
     QGuiApplication app(argc, argv);
-    app.setApplicationName("drawboard");
-    app.setApplicationDisplayName("Drawboard");
+    app.setApplicationName("paws");
+    app.setApplicationDisplayName("Paws");
     app.setApplicationVersion("0.1.0");
-    app.setDesktopFileName("drawboard");
-    app.setWindowIcon(QIcon::fromTheme("drawboard"));
+    app.setDesktopFileName("paws");
+    app.setWindowIcon(QIcon::fromTheme("paws"));
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Neovim for visual thinking - Linux-first personal drawing & diagramming");

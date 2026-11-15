@@ -1,5 +1,7 @@
 #include "geometry.h"
 
+#include <QFont>
+#include <QFontMetricsF>
 #include <QtMath>
 #include <algorithm>
 
@@ -26,23 +28,50 @@ QVector<StrokePoint> Geometry::smoothPoints(const QVector<StrokePoint> &rawPoint
     if (rawPoints.size() <= 2)
         return rawPoints;
 
+    int n = rawPoints.size();
     QVector<StrokePoint> smoothed;
-    smoothed.reserve(rawPoints.size());
+    smoothed.reserve(n);
     smoothed.append(rawPoints.first());
 
-    // Simple 3-point moving average to filter out high-frequency sensor jitter
-    for (int i = 1; i < rawPoints.size() - 1; ++i) {
-        const auto &prev = rawPoints[i - 1];
-        const auto &curr = rawPoints[i];
-        const auto &next = rawPoints[i + 1];
-
+    if (n == 3) {
         StrokePoint sp;
-        sp.x = 0.25 * prev.x + 0.5 * curr.x + 0.25 * next.x;
-        sp.y = 0.25 * prev.y + 0.5 * curr.y + 0.25 * next.y;
-        sp.pressure = 0.25 * prev.pressure + 0.5 * curr.pressure + 0.25 * next.pressure;
-        sp.time = curr.time;
+        sp.x = 0.25 * rawPoints[0].x + 0.5 * rawPoints[1].x + 0.25 * rawPoints[2].x;
+        sp.y = 0.25 * rawPoints[0].y + 0.5 * rawPoints[1].y + 0.25 * rawPoints[2].y;
+        sp.pressure = 0.25 * rawPoints[0].pressure + 0.5 * rawPoints[1].pressure + 0.25 * rawPoints[2].pressure;
+        sp.time = rawPoints[1].time;
         smoothed.append(sp);
+    } else {
+        // First interior point: 3-point binomial filter
+        StrokePoint sp1;
+        sp1.x = 0.25 * rawPoints[0].x + 0.5 * rawPoints[1].x + 0.25 * rawPoints[2].x;
+        sp1.y = 0.25 * rawPoints[0].y + 0.5 * rawPoints[1].y + 0.25 * rawPoints[2].y;
+        sp1.pressure = 0.25 * rawPoints[0].pressure + 0.5 * rawPoints[1].pressure + 0.25 * rawPoints[2].pressure;
+        sp1.time = rawPoints[1].time;
+        smoothed.append(sp1);
+
+        // Core interior points: 5-point binomial filter (1/16, 4/16, 6/16, 4/16, 1/16)
+        // for optimal Gaussian smoothing with zero lag and zero phase distortion
+        for (int i = 2; i < n - 2; ++i) {
+            StrokePoint sp;
+            sp.x = (rawPoints[i - 2].x + 4.0 * rawPoints[i - 1].x + 6.0 * rawPoints[i].x +
+                    4.0 * rawPoints[i + 1].x + rawPoints[i + 2].x) / 16.0;
+            sp.y = (rawPoints[i - 2].y + 4.0 * rawPoints[i - 1].y + 6.0 * rawPoints[i].y +
+                    4.0 * rawPoints[i + 1].y + rawPoints[i + 2].y) / 16.0;
+            sp.pressure = (rawPoints[i - 2].pressure + 4.0 * rawPoints[i - 1].pressure + 6.0 * rawPoints[i].pressure +
+                           4.0 * rawPoints[i + 1].pressure + rawPoints[i + 2].pressure) / 16.0;
+            sp.time = rawPoints[i].time;
+            smoothed.append(sp);
+        }
+
+        // Last interior point: 3-point binomial filter
+        StrokePoint spLast;
+        spLast.x = 0.25 * rawPoints[n - 3].x + 0.5 * rawPoints[n - 2].x + 0.25 * rawPoints[n - 1].x;
+        spLast.y = 0.25 * rawPoints[n - 3].y + 0.5 * rawPoints[n - 2].y + 0.25 * rawPoints[n - 1].y;
+        spLast.pressure = 0.25 * rawPoints[n - 3].pressure + 0.5 * rawPoints[n - 2].pressure + 0.25 * rawPoints[n - 1].pressure;
+        spLast.time = rawPoints[n - 2].time;
+        smoothed.append(spLast);
     }
+
     smoothed.append(rawPoints.last());
     return smoothed;
 }
@@ -53,7 +82,8 @@ QPainterPath Geometry::buildSmoothPath(const QVector<StrokePoint> &points) {
         return path;
 
     if (points.size() == 1) {
-        path.addEllipse(points[0].toPointF(), 1.0, 1.0);
+        path.moveTo(points[0].toPointF());
+        path.lineTo(points[0].toPointF());
         return path;
     }
 
@@ -63,21 +93,22 @@ QPainterPath Geometry::buildSmoothPath(const QVector<StrokePoint> &points) {
         return path;
     }
 
-    // Catmull-Rom spline converted to cubic Bezier curves
+    // Midpoint quadratic Bezier spline (Chaikin / Midpoint) - guaranteed C1 continuity,
+    // zero overshoot, buttery smooth curvature and instantaneous evaluation
     path.moveTo(points[0].toPointF());
+    QPointF p0 = points[0].toPointF();
+    QPointF p1 = points[1].toPointF();
+    QPointF firstMid = (p0 + p1) * 0.5;
+    path.lineTo(firstMid);
 
-    for (int i = 0; i < points.size() - 1; ++i) {
-        QPointF p0 = (i > 0) ? points[i - 1].toPointF() : points[i].toPointF();
-        QPointF p1 = points[i].toPointF();
-        QPointF p2 = points[i + 1].toPointF();
-        QPointF p3 = (i + 2 < points.size()) ? points[i + 2].toPointF() : points[i + 1].toPointF();
-
-        QPointF c1 = p1 + (p2 - p0) / 6.0;
-        QPointF c2 = p2 - (p3 - p1) / 6.0;
-
-        path.cubicTo(c1, c2, p2);
+    for (int i = 1; i < points.size() - 1; ++i) {
+        QPointF curr = points[i].toPointF();
+        QPointF next = points[i + 1].toPointF();
+        QPointF mid = (curr + next) * 0.5;
+        path.quadTo(curr, mid);
     }
 
+    path.lineTo(points.last().toPointF());
     return path;
 }
 
@@ -98,16 +129,38 @@ QRectF Geometry::calculateStrokeBounds(const QVector<StrokePoint> &points, qreal
     }
 
     qreal pad = strokeWidth * 0.5 + 4.0;
-    return QRectF(minX - pad, minY - pad, (maxX - minX) + pad * 2.0, (maxY - minY) + pad * 2.0);
+    qreal w = std::max(1.0, maxX - minX);
+    qreal h = std::max(1.0, maxY - minY);
+    return QRectF(minX - pad, minY - pad, w + pad * 2.0, h + pad * 2.0);
 }
 
-bool Geometry::hitTest(const Element &elem, const QPointF &point, qreal tolerance) {
+QRectF Geometry::calculateTextBounds(const QString &text, const QPointF &topLeft,
+                                     qreal fontSize, const QString &fontFamily) {
+    QFont font(fontFamily.isEmpty() ? "sans-serif" : fontFamily, static_cast<int>(std::round(fontSize)));
+    QFontMetricsF fm(font);
+
+    QString content = text.isEmpty() ? QString(" ") : text;
+    // Word-wrap / multi-line bounding rect
+    QRectF tightRect = fm.boundingRect(QRectF(0, 0, 10000, 10000), Qt::AlignLeft | Qt::TextWordWrap, content);
+
+    qreal w = std::max(tightRect.width() + 6.0, 20.0);
+    qreal h = std::max(tightRect.height() + 4.0, fm.height() + 4.0);
+
+    return QRectF(topLeft.x(), topLeft.y(), w, h);
+}
+
+bool Geometry::hitTest(const Element &elem, const QPointF &point, qreal tolerance, bool testInterior) {
     qreal tol = tolerance + elem.strokeWidth * 0.5;
 
     switch (elem.type) {
+    case ElementType::Highlighter:
     case ElementType::Stroke: {
         if (!elem.bounds.adjusted(-tol, -tol, tol, tol).contains(point))
             return false;
+
+        if (elem.points.size() == 1) {
+            return distance(point, elem.points[0].toPointF()) <= std::max(tol, elem.strokeWidth * 0.5 + 4.0);
+        }
 
         for (int i = 0; i < elem.points.size() - 1; ++i) {
             if (distanceToSegment(point, elem.points[i].toPointF(), elem.points[i + 1].toPointF()) <= tol)
@@ -118,8 +171,9 @@ bool Geometry::hitTest(const Element &elem, const QPointF &point, qreal toleranc
 
     case ElementType::Rectangle: {
         QRectF b = elem.bounds;
-        if (elem.fillColor != Qt::transparent && elem.fillColor.alpha() > 0) {
-            return b.contains(point);
+        bool hasFill = (elem.fillColor != Qt::transparent && elem.fillColor.alpha() > 0);
+        if (testInterior || hasFill) {
+            return b.adjusted(-tol, -tol, tol, tol).contains(point);
         }
         // Outline check: distance to 4 segments
         QPointF tl = b.topLeft();
@@ -140,11 +194,12 @@ bool Geometry::hitTest(const Element &elem, const QPointF &point, qreal toleranc
             return false;
 
         QPointF center = b.center();
-        qreal normX = (point.x() - center.x()) / rx;
-        qreal normY = (point.y() - center.y()) / ry;
+        qreal normX = (point.x() - center.x()) / (rx + tol);
+        qreal normY = (point.y() - center.y()) / (ry + tol);
         qreal d = normX * normX + normY * normY;
 
-        if (elem.fillColor != Qt::transparent && elem.fillColor.alpha() > 0) {
+        bool hasFill = (elem.fillColor != Qt::transparent && elem.fillColor.alpha() > 0);
+        if (testInterior || hasFill) {
             return d <= 1.0;
         }
         // Approximate distance to ellipse edge
@@ -158,6 +213,7 @@ bool Geometry::hitTest(const Element &elem, const QPointF &point, qreal toleranc
         return distanceToSegment(point, elem.startPoint, elem.endPoint) <= tol;
     }
 
+    case ElementType::Image:
     case ElementType::Text:
     case ElementType::StickyNote: {
         return elem.bounds.adjusted(-tol, -tol, tol, tol).contains(point);
@@ -183,8 +239,8 @@ bool Geometry::rectIntersectsElement(const QRectF &rect, const Element &element)
     if (!rect.intersects(element.bounds))
         return false;
 
-    // For strokes, verify if any point lies inside rect
-    if (element.type == ElementType::Stroke) {
+    // For strokes and highlighters, verify if any point lies inside rect
+    if (element.type == ElementType::Stroke || element.type == ElementType::Highlighter) {
         for (const auto &p : element.points) {
             if (rect.contains(p.toPointF()))
                 return true;
@@ -324,3 +380,4 @@ HandleType Geometry::hitTestHandles(const QRectF &b, const QPointF &pos, qreal h
 }
 
 } // namespace DrawBoard
+

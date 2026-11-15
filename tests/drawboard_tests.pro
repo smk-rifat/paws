@@ -29,3 +29,4 @@ SOURCES += \
     drawboard_tests.cpp
 
 RESOURCES += ../src/resources.qrc
+

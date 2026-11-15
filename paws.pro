@@ -1,7 +1,7 @@
 QT += core gui qml quick quickcontrols2 svg
 
 CONFIG += c++17 release
-TARGET = drawboard
+TARGET = paws
 TEMPLATE = app
 
 HEADERS += \
@@ -27,3 +27,4 @@ SOURCES += \
     src/main.cpp
 
 RESOURCES += src/resources.qrc
+

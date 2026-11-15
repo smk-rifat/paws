@@ -7,5 +7,7 @@
         <file>ShortcutsOverlay.qml</file>
         <file>ExportDialog.qml</file>
         <file>SettingsDialog.qml</file>
+        <file>CatOverlay.qml</file>
     </qresource>
 </RCC>
+

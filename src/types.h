@@ -1,6 +1,8 @@
 #pragma once
 
 #include <QColor>
+#include <QImage>
+#include <QByteArray>
 #include <QPointF>
 #include <QRectF>
 #include <QString>
@@ -11,6 +13,7 @@ namespace DrawBoard {
 enum class Tool {
     Select,
     Pen,
+    Highlighter,
     Eraser,
     Rectangle,
     Ellipse,
@@ -19,18 +22,21 @@ enum class Tool {
     Text,
     StickyNote,
     Connector,
-    Hand
+    Hand,
+    Laser
 };
 
 enum class ElementType {
     Stroke,
+    Highlighter,
     Rectangle,
     Ellipse,
     Line,
     Arrow,
     Text,
     StickyNote,
-    Connector
+    Connector,
+    Image
 };
 
 enum class CardinalPoint {
@@ -89,7 +95,7 @@ struct Element {
 
     // Styling
     QColor strokeColor;
-    qreal strokeWidth = 2.0;
+    qreal strokeWidth = 3.0;
     Qt::PenStyle strokeStyle = Qt::SolidLine;
     QColor fillColor = Qt::transparent;
 
@@ -110,6 +116,11 @@ struct Element {
     bool arrowStart = false;
     bool arrowEnd = true;
 
+    // Images & Attachments
+    QImage image;
+    QByteArray assetData;
+    QString mimeType;
+
     // Organization
     QString groupId;
     bool locked = false;
@@ -121,3 +132,4 @@ struct Element {
 };
 
 } // namespace DrawBoard
+

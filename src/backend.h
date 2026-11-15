@@ -1,5 +1,4 @@
 #pragma once
-
 #include "canvasitem.h"
 #include "document.h"
 #include "history.h"
@@ -32,6 +31,12 @@ class Backend : public QObject {
     Q_PROPERTY(QStringList recentFiles READ recentFiles NOTIFY recentFilesChanged)
     Q_PROPERTY(bool snapToGrid READ snapToGrid WRITE setSnapToGrid NOTIFY snapToGridChanged)
     Q_PROPERTY(int gridStyle READ gridStyle WRITE setGridStyle NOTIFY gridStyleChanged)
+    Q_PROPERTY(qreal gridSize READ gridSize WRITE setGridSize NOTIFY gridSizeChanged)
+    Q_PROPERTY(int windowWidth READ windowWidth NOTIFY windowGeometryChanged)
+    Q_PROPERTY(int windowHeight READ windowHeight NOTIFY windowGeometryChanged)
+    Q_PROPERTY(int windowX READ windowX NOTIFY windowGeometryChanged)
+    Q_PROPERTY(int windowY READ windowY NOTIFY windowGeometryChanged)
+    Q_PROPERTY(bool windowMaximized READ windowMaximized NOTIFY windowGeometryChanged)
 
 public:
     explicit Backend(Theme *theme, QObject *parent = nullptr);
@@ -74,6 +79,18 @@ public:
     int gridStyle() const { return m_gridStyle; }
     void setGridStyle(int style);
 
+    qreal gridSize() const { return m_gridSize; }
+    void setGridSize(qreal size);
+
+    int windowWidth() const { return m_windowWidth; }
+    int windowHeight() const { return m_windowHeight; }
+    int windowX() const { return m_windowX; }
+    int windowY() const { return m_windowY; }
+    bool windowMaximized() const { return m_windowMaximized; }
+
+    QString settingsFilePath() const;
+    void setSettingsFilePath(const QString &path) { m_customSettingsPath = path; }
+
     // QML Invokables
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
@@ -93,6 +110,7 @@ public:
     Q_INVOKABLE bool saveDocument(const QString &path = {});
     Q_INVOKABLE bool exportFile(const QString &path, const QString &format, qreal scale = 2.0, bool transparent = false);
 
+    Q_INVOKABLE void createText(qreal worldX, qreal worldY, const QString &text);
     Q_INVOKABLE void updateText(const QString &id, const QString &text);
     Q_INVOKABLE bool handleKeyPress(int key, int modifiers);
     Q_INVOKABLE void resetView();
@@ -101,6 +119,17 @@ public:
     Q_INVOKABLE void zoomToFit();
 
     Q_INVOKABLE void checkAutosaveRecovery();
+    Q_INVOKABLE void saveWindowGeometry(int x, int y, int width, int height, bool maximized);
+    Q_INVOKABLE void loadSettings(const QString &customPath = QString());
+    Q_INVOKABLE void saveSettings(const QString &customPath = QString());
+
+    Q_INVOKABLE bool pasteFromClipboard();
+    Q_INVOKABLE bool copySelectionToClipboard();
+    Q_INVOKABLE void cycleColor(bool forward = true);
+    Q_INVOKABLE void cyclePenSize(bool forward = true);
+    Q_INVOKABLE bool insertImageFromFile(const QString &filePath, const QPointF &preferredWorldPos = QPointF());
+    bool insertImage(const QImage &image, const QString &sourceName = "Screenshot", const QPointF &preferredWorldPos = QPointF());
+    bool insertPdf(const QString &pdfPath, const QPointF &preferredWorldPos = QPointF());
 
 signals:
     void toolChanged();
@@ -117,9 +146,16 @@ signals:
     void recentFilesChanged();
     void snapToGridChanged();
     void gridStyleChanged();
+    void gridSizeChanged();
+    void windowGeometryChanged();
     void showExportDialog();
     void showShortcutsDialog();
     void showSettingsDialog();
+    void showOpenDialog();
+    void showImportImageDialog();
+    void showDotMenu();
+    void toastRequested(const QString &message);
+    void toggleZenModeRequested();
 
 private:
     void updateStatus();
@@ -136,12 +172,21 @@ private:
     CanvasItem *m_canvas = nullptr;
 
     QString m_tool = "pen";
-    qreal m_penSize = 2.0;
+    qreal m_penSize = 3.0;
     int m_activeColorIndex = 0;
     bool m_snapToGrid = false;
     int m_gridStyle = 0; // Dots
+    qreal m_gridSize = 20.0;
 
-    QString m_statusText = "[PEN] 2px | 100% | 0 items";
+    int m_windowWidth = 1280;
+    int m_windowHeight = 800;
+    int m_windowX = -1;
+    int m_windowY = -1;
+    bool m_windowMaximized = false;
+    bool m_loadingSettings = false;
+    QString m_customSettingsPath;
+
+    QString m_statusText = "[PEN] 3px | 100% | 0 items";
     QString m_zoomText = "100%";
     QStringList m_recentFiles;
 

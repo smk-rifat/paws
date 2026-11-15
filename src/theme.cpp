@@ -270,6 +270,32 @@ void Theme::initPalettes() {
         "#21222c", "#bd93f9", "#f8f8f2",
         "#ff5555", "#50fa7b", "#f1fa8c", "#6272a4"
     });
+
+    // ==========================================
+    // 7. Nord Family
+    // ==========================================
+    add({
+        "nord-dark", "Nord", "Dark", "Nord Dark",
+        "#2e3440", "#3b4252", "#434c5e", "#4c566a", "#434c5e",
+        "#eceff4", "#d8dee9", "#88c0d0", "",
+        "#2e3440", "#434c5e", "#88c0d0", "#88c0d026",
+        "#eceff4", "#81a1c1", "#a3be8c",
+        "#3b4252", "#88c0d0", "#eceff4",
+        "#bf616a", "#a3be8c", "#ebcb8b", "#d8dee9"
+    });
+
+    // ==========================================
+    // 8. Tokyo Night Family
+    // ==========================================
+    add({
+        "tokyonight-storm", "Tokyo Night", "Storm", "Tokyo Night Storm",
+        "#24283b", "#1f2335", "#292e42", "#3b4261", "#292e42",
+        "#c0caf5", "#7aa2f7", "#7aa2f7", "",
+        "#24283b", "#292e42", "#7aa2f7", "#7aa2f726",
+        "#c0caf5", "#f7768e", "#9ece6a",
+        "#1f2335", "#7aa2f7", "#c0caf5",
+        "#f7768e", "#9ece6a", "#e0af68", "#7aa2f7"
+    });
 }
 
 QStringList Theme::availableThemes() const {
@@ -319,3 +345,4 @@ void Theme::setThemeId(const QString &id) {
     m_current = it.value();
     emit themeChanged();
 }
+

@@ -12,6 +12,8 @@ Rectangle {
     border.color: theme.border
     border.width: 1
 
+    signal requestImageImport()
+
     RowLayout {
         id: contentRow
         anchors.centerIn: parent
@@ -31,16 +33,18 @@ Rectangle {
                 text: {
                     switch (backend.tool) {
                     case "pen": return "P";
+                    case "highlighter": return "M";
                     case "select": return "V";
                     case "eraser": return "E";
                     case "rectangle": return "R";
-                    case "ellipse": return "O";
+                    case "ellipse": return "C";
                     case "line": return "L";
                     case "arrow": return "A";
                     case "text": return "T";
                     case "note": return "N";
-                    case "connector": return "C";
+                    case "connector": return "X";
                     case "hand": return "H";
+                    case "laser": return "K";
                     default: return "P";
                     }
                 }
@@ -116,16 +120,16 @@ Rectangle {
             color: theme.borderMuted
         }
 
-        // Pen Size Selector (1px, 2px, 4px, 8px)
+        // Pen Size Selector (1: 3px, 2: 4px, 3: 5px, 4: 6px)
         RowLayout {
             spacing: 4
 
             Repeater {
                 model: [
-                    { size: 1.0, label: "1" },
-                    { size: 2.0, label: "2" },
-                    { size: 4.0, label: "4" },
-                    { size: 8.0, label: "8" }
+                    { size: 3.0, label: "1" },
+                    { size: 4.0, label: "2" },
+                    { size: 5.0, label: "3" },
+                    { size: 6.0, label: "4" }
                 ]
 
                 delegate: Rectangle {
@@ -158,5 +162,81 @@ Rectangle {
                 }
             }
         }
+
+        // Divider
+        Rectangle {
+            implicitWidth: 1
+            implicitHeight: 16
+            color: theme.borderMuted
+        }
+
+        // Minimal Paste Screenshot / Insert Photo Button
+        Rectangle {
+            id: pasteScreenshotBtn
+            implicitWidth: 22
+            implicitHeight: 20
+            radius: Math.min(3, theme.radius)
+            color: pasteArea.containsMouse ? theme.surfaceElevated : "transparent"
+            border.color: pasteArea.containsMouse ? theme.accent : theme.borderMuted
+            border.width: 1
+
+            // Minimal clean vector screenshot / photo frame icon
+            Item {
+                anchors.centerIn: parent
+                width: 12
+                height: 10
+
+                // Outer photo / screen frame
+                Rectangle {
+                    anchors.fill: parent
+                    radius: 1
+                    color: "transparent"
+                    border.color: pasteArea.containsMouse ? theme.accent : theme.textMuted
+                    border.width: 1
+                }
+
+                // Inner lens / landscape dot
+                Rectangle {
+                    x: 2
+                    y: 2
+                    width: 3
+                    height: 3
+                    radius: 1.5
+                    color: pasteArea.containsMouse ? theme.accent : theme.textMuted
+                }
+
+                // Small hill / diagonal in bottom right
+                Rectangle {
+                    x: 6
+                    y: 4
+                    width: 4
+                    height: 4
+                    rotation: 45
+                    color: pasteArea.containsMouse ? theme.accent : theme.textMuted
+                }
+            }
+
+            ToolTip.visible: pasteArea.containsMouse
+            ToolTip.text: "Paste Screenshot (Ctrl+V) / Click to paste or choose photo/PDF"
+            ToolTip.delay: 400
+
+            MouseArea {
+                id: pasteArea
+                anchors.fill: parent
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                onClicked: (mouse) => {
+                    if (mouse.button === Qt.RightButton || (mouse.modifiers & Qt.ShiftModifier)) {
+                        root.requestImageImport()
+                    } else {
+                        if (!backend.pasteFromClipboard()) {
+                            root.requestImageImport()
+                        }
+                    }
+                }
+            }
+        }
     }
 }
+

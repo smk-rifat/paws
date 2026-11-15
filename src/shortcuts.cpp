@@ -19,7 +19,7 @@ ShortcutManager::ShortcutManager(QObject *parent)
 QString ShortcutManager::configFilePath() const {
     QString configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     if (configDir.isEmpty())
-        configDir = QDir::homePath() + "/.config/drawboard";
+        configDir = QDir::homePath() + "/.config/paws";
     return configDir + "/shortcuts.json";
 }
 
@@ -27,16 +27,18 @@ void ShortcutManager::initDefaults() {
     m_items = {
         // Tools
         {"tool_pen", "Tools", "Freehand Pen", "P", "P"},
+        {"tool_highlighter", "Tools", "Translucent Highlighter", "M", "M"},
         {"tool_eraser", "Tools", "Eraser", "E", "E"},
         {"tool_select", "Tools", "Select", "V", "V"},
         {"tool_rect", "Tools", "Rectangle", "R", "R"},
-        {"tool_ellipse", "Tools", "Ellipse", "O", "O"},
+        {"tool_ellipse", "Tools", "Circle", "C", "C"},
         {"tool_line", "Tools", "Line", "L", "L"},
         {"tool_arrow", "Tools", "Arrow", "A", "A"},
         {"tool_text", "Tools", "Text", "T", "T"},
         {"tool_note", "Tools", "Sticky Note", "N", "N"},
-        {"tool_connector", "Tools", "Connector", "C", "C"},
+        {"tool_connector", "Tools", "Connector", "X", "X"},
         {"tool_hand", "Tools", "Hand / Pan", "H", "H"},
+        {"tool_laser", "Tools", "Laser Pointer", "K", "K"},
 
         // Navigation
         {"zoom_in", "Navigation", "Zoom In", "Ctrl+=", "Ctrl+="},
@@ -47,6 +49,8 @@ void ShortcutManager::initDefaults() {
         // Edit
         {"edit_undo", "Edit", "Undo", "Ctrl+Z", "Ctrl+Z"},
         {"edit_redo", "Edit", "Redo", "Ctrl+Shift+Z", "Ctrl+Shift+Z"},
+        {"edit_copy_image", "Edit", "Copy Snapshot to Clipboard", "Ctrl+Shift+C", "Ctrl+Shift+C"},
+        {"edit_paste", "Edit", "Paste Screenshot / Image", "Ctrl+V", "Ctrl+V"},
         {"edit_delete", "Edit", "Delete Selected", "Delete", "Delete"},
         {"edit_duplicate", "Edit", "Duplicate", "Ctrl+D", "Ctrl+D"},
         {"edit_select_all", "Edit", "Select All", "Ctrl+A", "Ctrl+A"},
@@ -64,7 +68,15 @@ void ShortcutManager::initDefaults() {
         {"file_save_as", "File", "Save As...", "Ctrl+Shift+S", "Ctrl+Shift+S"},
         {"file_export", "File", "Export...", "Ctrl+E", "Ctrl+E"},
 
+        // Pen Sizes
+        {"pen_size_1", "Drawing", "Pen Size 1 (3px)", "1", "1"},
+        {"pen_size_2", "Drawing", "Pen Size 2 (4px)", "2", "2"},
+        {"pen_size_3", "Drawing", "Pen Size 3 (5px)", "3", "3"},
+        {"pen_size_4", "Drawing", "Pen Size 4 (6px)", "4", "4"},
+
         // View & Cheatsheet
+        {"view_zen", "View", "Zen Mode", "Z", "Z"},
+        {"palette_cycle", "View", "Cycle Color", "Tab", "Tab"},
         {"toggle_menu", "View", "Toggle Menu", "Ctrl+M", "Ctrl+M"},
         {"toggle_grid", "View", "Toggle Grid", "Ctrl+'", "Ctrl+'"},
         {"show_shortcuts", "Help", "Shortcuts Cheatsheet", "?", "?"}
@@ -193,3 +205,4 @@ QString ShortcutManager::findActionForKey(int key, Qt::KeyboardModifiers modifie
 }
 
 } // namespace DrawBoard
+

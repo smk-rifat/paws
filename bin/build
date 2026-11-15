@@ -1,11 +1,11 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 mkdir -p "$ROOT/build"
 cd "$ROOT/build"
 
-qmake6 "$ROOT/drawboard.pro"
+qmake6 "$ROOT/paws.pro"
 make -j"$(nproc)"
 
-echo "Built $ROOT/build/drawboard"
+echo "Built $ROOT/build/paws"

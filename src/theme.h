@@ -154,3 +154,4 @@ private:
     QTimer m_roundingPoll;
     QTimer m_roundingTimeout;
 };
+

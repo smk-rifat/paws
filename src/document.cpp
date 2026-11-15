@@ -57,7 +57,7 @@ QString Document::addElement(const Element &elem) {
     if (copy.id.isEmpty())
         copy.id = generateId();
 
-    if (copy.type == ElementType::Stroke && copy.bounds.isEmpty()) {
+    if ((copy.type == ElementType::Stroke || copy.type == ElementType::Highlighter) && copy.bounds.isEmpty()) {
         copy.bounds = Geometry::calculateStrokeBounds(copy.points, copy.strokeWidth);
     }
 
@@ -76,7 +76,7 @@ bool Document::updateElement(const Element &elem) {
         return false;
 
     Element copy = elem;
-    if (copy.type == ElementType::Stroke) {
+    if (copy.type == ElementType::Stroke || copy.type == ElementType::Highlighter) {
         copy.bounds = Geometry::calculateStrokeBounds(copy.points, copy.strokeWidth);
     }
 
@@ -209,7 +209,7 @@ void Document::moveSelected(const QPointF &delta) {
 
         el->bounds.translate(delta);
 
-        if (el->type == ElementType::Stroke) {
+        if (el->type == ElementType::Stroke || el->type == ElementType::Highlighter) {
             for (auto &p : el->points) {
                 p.x += delta.x();
                 p.y += delta.y();
@@ -294,7 +294,11 @@ void Document::resizeSelected(HandleType handle, const QPointF &delta, bool pres
             relH * newBounds.height()
         );
 
-        if (el->type == ElementType::Stroke) {
+        if (el->type == ElementType::Text) {
+            qreal fontScale = std::min(scaleX, scaleY);
+            el->fontSize = std::max(8.0, el->fontSize * fontScale);
+            el->bounds = Geometry::calculateTextBounds(el->text, el->bounds.topLeft(), el->fontSize, el->fontFamily);
+        } else if (el->type == ElementType::Stroke || el->type == ElementType::Highlighter) {
             for (auto &p : el->points) {
                 qreal px = (p.x - origBounds.left()) / origBounds.width();
                 qreal py = (p.y - origBounds.top()) / origBounds.height();
@@ -342,7 +346,7 @@ QVector<QString> Document::duplicateSelected(const QPointF &offset) {
         dup.id = generateId();
         dup.bounds.translate(offset);
 
-        if (dup.type == ElementType::Stroke) {
+        if (dup.type == ElementType::Stroke || dup.type == ElementType::Highlighter) {
             for (auto &p : dup.points) {
                 p.x += offset.x();
                 p.y += offset.y();
@@ -493,30 +497,34 @@ static QString elementTypeToString(ElementType t) {
     switch (t) {
     case ElementType::Stroke: return "stroke";
     case ElementType::Rectangle: return "rectangle";
+    case ElementType::Highlighter: return "highlighter";
     case ElementType::Ellipse: return "ellipse";
     case ElementType::Line: return "line";
     case ElementType::Arrow: return "arrow";
     case ElementType::Text: return "text";
     case ElementType::StickyNote: return "stickyNote";
     case ElementType::Connector: return "connector";
+    case ElementType::Image: return "image";
     }
     return "stroke";
 }
 
 static ElementType stringToElementType(const QString &s) {
     if (s == "rectangle") return ElementType::Rectangle;
+    if (s == "highlighter") return ElementType::Highlighter;
     if (s == "ellipse") return ElementType::Ellipse;
     if (s == "line") return ElementType::Line;
     if (s == "arrow") return ElementType::Arrow;
     if (s == "text") return ElementType::Text;
     if (s == "stickyNote") return ElementType::StickyNote;
     if (s == "connector") return ElementType::Connector;
+    if (s == "image") return ElementType::Image;
     return ElementType::Stroke;
 }
 
 QJsonObject Document::toJson() const {
     QJsonObject root;
-    root["format"] = "drawboard";
+    root["format"] = "paws";
     root["schemaVersion"] = 1;
     root["appVersion"] = "0.1.0";
     root["createdAt"] = QDateTime::currentDateTime().toString(Qt::ISODate);
@@ -531,7 +539,7 @@ QJsonObject Document::toJson() const {
         QJsonArray boundsArr{el.bounds.x(), el.bounds.y(), el.bounds.width(), el.bounds.height()};
         o["bounds"] = boundsArr;
 
-        if (el.type == ElementType::Stroke) {
+        if (el.type == ElementType::Stroke || el.type == ElementType::Highlighter) {
             QJsonArray pts;
             for (const auto &p : el.points) {
                 QJsonArray pt{p.x, p.y, p.pressure, static_cast<double>(p.time)};
@@ -572,6 +580,11 @@ QJsonObject Document::toJson() const {
             o["arrowEnd"] = el.arrowEnd;
         }
 
+        if (el.type == ElementType::Image) {
+            o["assetData"] = QString::fromLatin1(el.assetData.toBase64());
+            o["mimeType"] = el.mimeType;
+        }
+
         if (!el.groupId.isEmpty()) o["groupId"] = el.groupId;
         if (el.locked) o["locked"] = true;
         if (el.hidden) o["hidden"] = true;
@@ -584,7 +597,8 @@ QJsonObject Document::toJson() const {
 }
 
 bool Document::fromJson(const QJsonObject &root) {
-    if (root.value("format").toString() != "drawboard")
+    QString fmt = root.value("format").toString();
+    if (fmt != "paws" && fmt != "drawboard")
         return false;
 
     clear();
@@ -603,7 +617,7 @@ bool Document::fromJson(const QJsonObject &root) {
                                boundsArr[2].toDouble(), boundsArr[3].toDouble());
         }
 
-        if (el.type == ElementType::Stroke) {
+        if (el.type == ElementType::Stroke || el.type == ElementType::Highlighter) {
             QJsonArray pts = o.value("points").toArray();
             for (const auto &pv : pts) {
                 QJsonArray pt = pv.toArray();
@@ -642,6 +656,14 @@ bool Document::fromJson(const QJsonObject &root) {
             el.toCardinal = static_cast<CardinalPoint>(o.value("toCardinal").toInt(0));
             el.arrowStart = o.value("arrowStart").toBool(false);
             el.arrowEnd = o.value("arrowEnd").toBool(true);
+        }
+
+        if (el.type == ElementType::Image) {
+            el.assetData = QByteArray::fromBase64(o.value("assetData").toString().toLatin1());
+            el.mimeType = o.value("mimeType").toString("image/png");
+            if (!el.assetData.isEmpty()) {
+                el.image.loadFromData(el.assetData);
+            }
         }
 
         el.groupId = o.value("groupId").toString();
@@ -706,3 +728,4 @@ void Document::setModified(bool modified) {
 }
 
 } // namespace DrawBoard
+

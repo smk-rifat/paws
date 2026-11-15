@@ -28,6 +28,20 @@ void Exporter::paintElement(QPainter &painter, const Element &el, const ThemePal
     QBrush brush(el.fillColor);
 
     switch (el.type) {
+    case ElementType::Highlighter: {
+        if (!el.points.isEmpty()) {
+            QPainterPath path = Geometry::buildSmoothPath(el.points);
+            QColor hlColor = el.strokeColor.isValid() ? el.strokeColor : QColor("#fabd2f");
+            hlColor.setAlphaF(0.35);
+            qreal hlWidth = el.strokeWidth > 0 ? el.strokeWidth : 20.0;
+            QPen hlPen(hlColor, hlWidth, Qt::SolidLine, Qt::FlatCap, Qt::RoundJoin);
+            painter.setPen(hlPen);
+            painter.setBrush(Qt::NoBrush);
+            painter.drawPath(path);
+        }
+        break;
+    }
+
     case ElementType::Stroke: {
         if (!el.points.isEmpty()) {
             QPainterPath path = Geometry::buildSmoothPath(el.points);
@@ -129,6 +143,19 @@ void Exporter::paintElement(QPainter &painter, const Element &el, const ThemePal
         }
         break;
     }
+
+    case ElementType::Image: {
+        if (!el.image.isNull()) {
+            painter.drawImage(el.bounds, el.image);
+        } else if (!el.assetData.isEmpty()) {
+            QImage img;
+            if (img.loadFromData(el.assetData)) {
+                const_cast<Element&>(el).image = img;
+                painter.drawImage(el.bounds, img);
+            }
+        }
+        break;
+    }
     }
 
     painter.restore();
@@ -138,6 +165,49 @@ void Exporter::paintElements(QPainter &painter, const QVector<Element> &elements
     for (const auto &el : elements) {
         paintElement(painter, el, theme);
     }
+}
+
+QImage Exporter::renderImage(const QVector<Element> &elements, const ThemePalette &theme,
+                             qreal scale, bool transparentBg, qreal padding) {
+    if (elements.isEmpty())
+        return QImage();
+
+    QRectF bounds;
+    for (const auto &el : elements) {
+        if (!el.hidden) {
+            if (bounds.isEmpty())
+                bounds = el.bounds;
+            else
+                bounds = bounds.united(el.bounds);
+        }
+    }
+
+    if (bounds.isEmpty() || bounds.width() < 1 || bounds.height() < 1)
+        return QImage();
+
+    bounds = bounds.adjusted(-padding, -padding, padding, padding);
+    int width = std::max(10, static_cast<int>(std::ceil(bounds.width() * scale)));
+    int height = std::max(10, static_cast<int>(std::ceil(bounds.height() * scale)));
+
+    QImage image(width, height, QImage::Format_ARGB32_Premultiplied);
+    if (!transparentBg) {
+        image.fill(QColor(theme.canvas.isEmpty() ? "#282828" : theme.canvas));
+    } else {
+        image.fill(Qt::transparent);
+    }
+
+    QPainter painter(&image);
+    painter.setRenderHint(QPainter::Antialiasing, true);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
+    painter.setRenderHint(QPainter::TextAntialiasing, true);
+
+    painter.scale(scale, scale);
+    painter.translate(-bounds.topLeft());
+
+    paintElements(painter, elements, theme);
+    painter.end();
+
+    return image;
 }
 
 QRectF Exporter::calculateExportBounds(const Document &doc, qreal padding) {
@@ -246,3 +316,4 @@ bool Exporter::exportPdf(const QString &filePath, const Document &doc, const The
 }
 
 } // namespace DrawBoard
+

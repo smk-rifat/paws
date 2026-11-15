@@ -1,7 +1,11 @@
-#!/bin/sh
-set -eu
+#!/usr/bin/env bash
+set -euo pipefail
 
-ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Ensure binary is built
 "$ROOT/bin/build"
+
+# Package and install via PKGBUILD
 cd "$ROOT/pkgbuild"
-exec makepkg -fsi "$@"
+makepkg -fsi --noconfirm
